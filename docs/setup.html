@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setup Guide · Hearth</title>
+<meta name="description" content="How to connect Hearth to your Nest thermostat: register for Google Device Access, create an OAuth client, and sign in.">
+<link rel="icon" href="mark.svg">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <img class="mark" src="mark.svg" alt="">
+    <div class="word"><a href="index.html">Hearth</a></div>
+  </header>
+  <p class="lede">Setup guide</p>
+  <p class="sub">Google requires a one-time registration before any app can reach a Nest thermostat. This takes about 15 minutes and a $5 fee paid to Google. Hearth's setup window follows the same steps and links to each page.</p>
+</div>
+
+<main style="margin-top:28px;padding-top:40px">
+  <div class="wrap">
+
+    <section>
+      <p class="eyebrow">Before you start</p>
+      <ul>
+        <li>Use the Google account that owns the thermostat. It is the one you use in the Google Home or Nest app.</li>
+        <li>Install Hearth and open it. The setup window opens on first launch. Later, find it in the panel's ... menu under Account and Settings.</li>
+        <li>You will end up with three values: a <b>Project ID</b>, a <b>Client ID</b> and a <b>Client Secret</b>.</li>
+      </ul>
+    </section>
+
+    <section>
+      <p class="eyebrow">Google Cloud</p>
+      <h2>Create the sign-in client</h2>
+      <ol class="guide">
+        <li>
+          <h3>Create an OAuth client</h3>
+          <p>Open <a href="https://console.cloud.google.com/auth/clients/create">Google Auth Platform, Clients</a>. Pick an existing project or create one.</p>
+          <ul>
+            <li>If Google asks you to configure the consent screen first, choose <b>External</b> for the audience and fill in an app name and your email.</li>
+            <li>Application type: <b>Desktop app</b>. Name it Hearth. Click <b>Create</b>.</li>
+            <li>Copy the Client ID and Client Secret, or click <b>Download JSON</b>. Hearth can read that file.</li>
+          </ul>
+        </li>
+        <li>
+          <h3>Enable the Smart Device Management API</h3>
+          <p>Open the <a href="https://console.cloud.google.com/apis/library/smartdevicemanagement.googleapis.com">API page</a>, check that the project picker shows the same project as your client, and click <b>Enable</b>.</p>
+        </li>
+        <li>
+          <h3>Add yourself as a test user</h3>
+          <p>Open <a href="https://console.cloud.google.com/auth/audience">Audience</a> and add your Google account under <b>Test users</b>. Without this, Google blocks the sign-in.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section>
+      <p class="eyebrow">Device Access</p>
+      <h2>Link the client to your Nest</h2>
+      <ol class="guide" start="4" style="counter-reset:step 3">
+        <li>
+          <h3>Register for Device Access</h3>
+          <p>Open the <a href="https://console.nest.google.com/device-access">Device Access console</a>, accept the terms and pay the one-time $5 fee.</p>
+        </li>
+        <li>
+          <h3>Create a project</h3>
+          <ul>
+            <li>Give it any name.</li>
+            <li>Paste your OAuth Client ID when asked.</li>
+            <li>Leave <b>Enable events</b> off. Hearth refreshes on its own and does not need Pub/Sub.</li>
+            <li>Click <b>Create project</b>.</li>
+          </ul>
+        </li>
+        <li>
+          <h3>Copy the Project ID</h3>
+          <p>It looks like <code>1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d</code>.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section>
+      <p class="eyebrow">Hearth</p>
+      <h2>Connect and sign in</h2>
+      <ol class="guide" start="7" style="counter-reset:step 6">
+        <li>
+          <h3>Enter your credentials</h3>
+          <p>In the setup window, go to <b>Credentials</b>. Copy each value and click <b>Paste</b>. Hearth works out which field it belongs in. You can also drop the client JSON file on the window. Each field shows a check when the value looks right.</p>
+        </li>
+        <li>
+          <h3>Sign in with Google</h3>
+          <p>Your browser opens. Pick your account. If Google says the app is unverified, click <b>Advanced</b>, then continue. This is your own project, so that warning is expected.</p>
+        </li>
+        <li>
+          <h3>Turn on your thermostat</h3>
+          <p>On the Nest permissions screen, select your home and turn on each thermostat you want to control. Approve. The browser shows a success page and Hearth lists the thermostats it found.</p>
+        </li>
+      </ol>
+
+      <div class="tip">
+        <p><b>Avoid signing in every week.</b> While your consent screen is in Testing, Google ends the sign-in after 7 days. To stop that, open <a href="https://console.cloud.google.com/auth/audience">Audience</a> and click <b>Publish app</b>. It stays unverified, which is fine for personal use.</p>
+      </div>
+    </section>
+
+    <section>
+      <p class="eyebrow">Troubleshooting</p>
+      <h2>If something goes wrong</h2>
+      <h3>No thermostats show up</h3>
+      <p>The thermostat was not turned on in the Nest permissions screen. Use <b>Fix Permissions</b> in the setup window, or <b>Change Thermostat Access</b> in Account and Settings, and turn it on.</p>
+      <h3>"Access blocked"</h3>
+      <p>Your account is not a test user, or the app is not published. Add yourself on the Audience page and sign in again.</p>
+      <h3>"Invalid client"</h3>
+      <p>Check the Client ID and Secret, and that the client type is Desktop app. A new client can take a few minutes to start working.</p>
+      <h3>Signed out after a week</h3>
+      <p>The consent screen is still in Testing. Publish it, then sign in again.</p>
+      <h3>Still stuck</h3>
+      <p>Email <a href="mailto:support@hearthbar.app">support@hearthbar.app</a> with the message Hearth showed you.</p>
+    </section>
+
+  </div>
+</main>
+
+<div class="wrap">
+  <footer>
+    <div class="links">
+      <a href="index.html">Hearth</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="mailto:support@hearthbar.app">Support</a>
+    </div>
+    <p>Hearth is not affiliated with Google or Nest. Nest is a trademark of Google LLC.</p>
+  </footer>
+</div>
+
+</body>
+</html>

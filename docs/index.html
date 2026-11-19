@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hearth</title>
+<meta name="description" content="A Mac menu bar app for your Nest thermostat. See the temperature at a glance and change it without picking up your phone.">
+<link rel="icon" href="mark.svg">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <img class="mark" src="mark.svg" alt="">
+    <div class="word">Hearth</div>
+  </header>
+  <p class="lede">Your Nest thermostat, <em>in the menu bar.</em></p>
+  <p class="sub">Hearth is a small Mac app that puts the temperature at the top of your screen. Click it to get a dial and full control: heat, cool, auto, eco and the fan. No phone required.</p>
+  <p class="get">
+    <a class="button" href="https://github.com/hearthbar/hearth/releases/latest">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg>
+      Download for Mac
+    </a>
+    <span class="note">macOS 15 or later. Free.</span>
+  </p>
+
+  <div class="stage" aria-hidden="true">
+    <div class="menubar">
+      <span class="dim">Wed 9:41</span>
+      <span class="item on">
+        <svg viewBox="0 0 24 24" fill="#E8611F" aria-hidden="true"><path d="M12 2c1 3.2-.6 5-2.2 6.7C8.3 10.3 7 11.9 7 14.5a5 5 0 0 0 10 0c0-2.2-1-3.9-2.2-5.1.1 1.4-.4 2.6-1.4 3.1.4-3.3-.6-7.4-1.4-10.5Z"/></svg>
+        68°
+      </span>
+    </div>
+    <div class="panel">
+      <img src="img/1-heating.png" width="640" height="1104" alt="">
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="wrap">
+
+    <section>
+      <p class="eyebrow">How it works</p>
+      <h2>Glance, click, done</h2>
+      <ul class="steps">
+        <li><span class="n">01</span><span><b>Look up</b>The menu bar shows the inside temperature. The icon changes when the system is heating, cooling or in Eco.</span></li>
+        <li><span class="n">02</span><span><b>Click to open the dial</b>Drag the knob, scroll over the dial, or use the + and - buttons and arrow keys. The change goes to the thermostat once you stop adjusting.</span></li>
+        <li><span class="n">03</span><span><b>Pick a mode</b>Heat, Cool, Auto or Off. In Auto you get two knobs, one for heat and one for cool, kept a safe distance apart.</span></li>
+        <li><span class="n">04</span><span><b>Leave it</b>Hearth refreshes every minute on its own, checks more often right after a change, and pauses while your Mac sleeps.</span></li>
+      </ul>
+
+      <figure class="shots one">
+        <div class="shot">
+          <img src="img/2-auto.png" width="640" height="1104" loading="lazy" alt="The Upstairs thermostat in Auto mode. The dark dial has an orange heat knob at 68 and a blue cool knob at 76, with the inside temperature at 72 degrees. Below it: humidity 47 percent, mode buttons with Auto selected, an Eco switch and a Fan menu.">
+        </div>
+        <figcaption>Auto mode shows a heat knob and a cool knob. The dial glows orange or blue while the system runs.</figcaption>
+      </figure>
+    </section>
+
+    <section>
+      <p class="eyebrow">Features</p>
+      <h2>Everything the thermostat does</h2>
+      <div class="grid">
+        <div class="tile">
+          <div class="ic ember"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 3.2-.6 5-2.2 6.7C8.3 10.3 7 11.9 7 14.5a5 5 0 0 0 10 0c0-2.2-1-3.9-2.2-5.1.1 1.4-.4 2.6-1.4 3.1.4-3.3-.6-7.4-1.4-10.5Z"/></svg></div>
+          <b>Every mode</b><span>Heat, Cool, Auto and Off, with a separate heat and cool setpoint in Auto.</span>
+        </div>
+        <div class="tile">
+          <div class="ic leaf"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 4c-9 0-15 4.5-15 11.5 0 1.6.4 3 1 4.1C7.8 15 11 11.5 15.5 9.5 11.8 12 9 15.4 7.6 20.2 8.8 20.7 10 21 11.5 21 18 21 20 13 20 4Z"/></svg></div>
+          <b>Eco</b><span>Turn Eco on when you leave. Hearth shows the range it holds.</span>
+        </div>
+        <div class="tile">
+          <div class="ic teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M12 10.4c-1-3.4.2-6.4 2.6-6.4 2.3 0 2.5 3.4-2.6 6.4Zm1.4 2.4c3.4-.8 6 1.1 4.9 3.2-1.1 2-4.1.7-4.9-3.2Zm-2.8 0c-2.4 2.6-5.6 3-6.2.8-.6-2.3 2.4-3.6 6.2-.8Z"/></svg></div>
+          <b>Fan timer</b><span>Run the fan for 15 minutes up to 12 hours, and stop it early.</span>
+        </div>
+        <div class="tile">
+          <div class="ic cool"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7M6 9.5V20h12V9.5"/></svg></div>
+          <b>More than one thermostat</b><span>Switch between them from the name at the top of the panel.</span>
+        </div>
+        <div class="tile">
+          <div class="ic plum"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3c3 4 6 7.2 6 10.5a6 6 0 0 1-12 0C6 10.2 9 7 12 3Z"/></svg></div>
+          <b>Humidity and status</b><span>Inside temperature, humidity, and whether it is heating, cooling or idle.</span>
+        </div>
+        <div class="tile">
+          <div class="ic slate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v9M7 6.5a7 7 0 1 0 10 0"/></svg></div>
+          <b>Stays out of the way</b><span>No Dock icon. Opens at login if you want. Works with VoiceOver.</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <p class="eyebrow">What you need</p>
+      <h2>One-time setup with Google</h2>
+      <p>Google only lets apps reach a Nest thermostat through its Device Access program. For personal use, that means you register once and create your own small Google project. Hearth walks you through every step.</p>
+      <div class="card">
+        <ul class="needs">
+          <li><span class="k">MAC</span><span class="v">macOS 15 or later</span></li>
+          <li><span class="k">ACCOUNT</span><span class="v">The Google account that owns your thermostat</span></li>
+          <li><span class="k">FEE</span><span class="v">$5, once, paid to Google for Device Access. Not a subscription, and Hearth gets none of it.</span></li>
+          <li><span class="k">TIME</span><span class="v">About 15 minutes, mostly clicking through Google's consoles</span></li>
+        </ul>
+        <p><a href="setup.html">Read the setup guide</a></p>
+      </div>
+      <figure class="wide">
+        <div class="shot">
+          <img src="img/3-setup.png" width="1200" height="1056" loading="lazy" alt="Hearth's setup window. A sidebar lists six steps: Welcome, Google Cloud, Device Access, Credentials, Sign In and Done. The Welcome page lists what you need: the Google account that owns your thermostat, a one-time $5 fee, and about 15 minutes.">
+        </div>
+        <figcaption>The setup window stays open while you work in the browser. It links to each Google page, checks what you paste, and takes the client file Google gives you.</figcaption>
+      </figure>
+    </section>
+
+    <section>
+      <p class="eyebrow">Your data</p>
+      <h2>Between your Mac and Google</h2>
+      <div class="card">
+        <p>Hearth has no server, no accounts and no analytics. It talks to Google and nothing else. Your sign-in tokens stay in your Mac's Keychain, and thermostat readings are only kept in memory while the app runs.</p>
+        <p><a href="privacy.html">Read the privacy policy</a></p>
+      </div>
+
+      <figure class="fig">
+        <svg class="dg" viewBox="0 0 360 250" role="img" aria-labelledby="dg-data-t dg-data-d">
+          <title id="dg-data-t">Where Hearth's data goes</title>
+          <desc id="dg-data-d">On your Mac, Hearth keeps your Google credentials and tokens in the Keychain. It talks directly to Google: Google sign-in and the Smart Device Management API. Google talks to your Nest thermostat. There is no Hearth server in between.</desc>
+          <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+          <rect class="zone" x="10" y="6" width="340" height="88" rx="14"/>
+          <text class="mono" x="26" y="28">YOUR MAC</text>
+          <rect class="box" x="26" y="38" width="150" height="44" rx="10"/>
+          <text class="serif ink" x="40" y="65">Hearth</text>
+          <rect class="box" x="186" y="38" width="148" height="44" rx="10"/>
+          <text class="serif ink" x="200" y="58">Keychain</text>
+          <text class="sm" x="200" y="74">client ID and tokens</text>
+          <path class="arrow" d="M101 98 V134" marker-start="url(#ah)" marker-end="url(#ah)"/>
+          <text class="sm" x="110" y="120">HTTPS</text>
+          <rect class="box" x="26" y="140" width="308" height="44" rx="10"/>
+          <text class="serif ink" x="40" y="167">Google</text>
+          <text class="sm" x="104" y="167">sign-in and Smart Device Management</text>
+          <path class="arrow ember" d="M180 188 V212" marker-start="url(#ah)" marker-end="url(#ah)"/>
+          <text class="serif ink" x="180" y="236" text-anchor="middle">Your Nest thermostat</text>
+        </svg>
+        <figcaption>There is no Hearth server in the middle. Revoke access any time from your Google account.</figcaption>
+      </figure>
+    </section>
+
+    <section>
+      <p class="eyebrow">Support</p>
+      <h2>Questions or bugs</h2>
+      <p>Email <a href="mailto:support@hearthbar.app">support@hearthbar.app</a>. Include your macOS version and what you saw.</p>
+      <p class="get">
+        <a class="button" href="https://github.com/hearthbar/hearth/releases/latest">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg>
+          Download for Mac
+        </a>
+        <a class="button quiet" href="setup.html">Setup guide</a>
+      </p>
+    </section>
+
+  </div>
+</main>
+
+<div class="wrap">
+  <footer>
+    <div class="links">
+      <a href="https://github.com/hearthbar/hearth/releases/latest">Download</a>
+      <a href="setup.html">Setup</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="mailto:support@hearthbar.app">Support</a>
+      <span>Hearth</span>
+    </div>
+    <p>Hearth is not affiliated with Google or Nest. Nest is a trademark of Google LLC.</p>
+  </footer>
+</div>
+
+</body>
+</html>

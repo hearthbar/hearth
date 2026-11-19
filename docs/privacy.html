@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy · Hearth</title>
+<meta name="description" content="Hearth has no server and collects nothing. It talks only to Google, and your tokens stay in your Mac's Keychain.">
+<link rel="icon" href="mark.svg">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <img class="mark" src="mark.svg" alt="">
+    <div class="word"><a href="index.html">Hearth</a></div>
+  </header>
+  <p class="lede">Privacy policy</p>
+  <p class="sub">The short version: Hearth has no server and collects nothing about you. It talks to Google to read and control your thermostat, and nothing else. Your sign-in stays on your Mac.</p>
+</div>
+
+<main style="margin-top:28px;padding-top:40px">
+  <div class="wrap">
+    <p class="updated">Effective November 18, 2026</p>
+
+    <section>
+      <h2>What the app stores</h2>
+      <p>Hearth stores three values you enter during setup: your Device Access Project ID, your OAuth Client ID and your OAuth Client Secret. After you sign in, it also stores the refresh token Google issues. All four are kept in the macOS Keychain on your Mac.</p>
+      <p>It also remembers which thermostat you selected, in the app's own settings on your Mac. If you turn on Open at login, macOS keeps that setting as a login item.</p>
+      <p>Thermostat readings, such as temperature, humidity, mode and setpoints, are held in memory while the app runs. They are not written to disk and not sent anywhere except back to Google when you make a change.</p>
+    </section>
+
+    <section>
+      <h2>Who it talks to</h2>
+      <h3>Google, and only Google</h3>
+      <p>Hearth connects directly to these Google services over HTTPS:</p>
+      <ul>
+        <li><code>nestservices.google.com</code> and Google sign-in, to ask your permission to access your thermostat.</li>
+        <li><code>oauth2.googleapis.com</code>, to exchange and refresh sign-in tokens.</li>
+        <li><code>smartdevicemanagement.googleapis.com</code>, to read your thermostat and send the changes you make.</li>
+      </ul>
+      <p>Requests go through the Google project you created, under your own account. Google's handling of that data is covered by the <a href="https://policies.google.com/privacy">Google Privacy Policy</a>.</p>
+
+      <h3>Your Mac, during sign-in</h3>
+      <p>To receive Google's reply after you approve access, Hearth runs a temporary local server on <code>127.0.0.1</code>. It only accepts connections from your own Mac and stops as soon as sign-in finishes or is cancelled.</p>
+
+      <h3>Nowhere else</h3>
+      <p>There is no Hearth server. The app contains no analytics, advertising or crash-reporting software, and no third-party SDKs. No data is sold, shared or disclosed to anyone, because none of it reaches the developer.</p>
+    </section>
+
+    <section>
+      <h2>Use of Google user data</h2>
+      <p>Hearth uses the Smart Device Management scope only to show your thermostat's state and to carry out the changes you make in the app. Hearth's use and transfer of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+    </section>
+
+    <section>
+      <h2>Tracking</h2>
+      <p>Hearth does not track you across apps or websites. It has no accounts and no identifiers of its own.</p>
+    </section>
+
+    <section>
+      <h2>Removing access and data</h2>
+      <ul>
+        <li><b>Inside the app:</b> Account and Settings, Sign Out, removes the refresh token from your Keychain. Your saved IDs stay so you can sign back in. Entering new ones replaces them.</li>
+        <li><b>Your Nest permissions:</b> change or remove device access at <a href="https://nestservices.google.com/partnerconnections">nestservices.google.com/partnerconnections</a>.</li>
+        <li><b>Your Google account:</b> remove Hearth's access at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>
+        <li><b>Everything:</b> delete the app. Keychain items can be removed in Keychain Access by searching for Hearth.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Children</h2>
+      <p>Hearth is not directed at children under 13, and collects no personal information from anyone.</p>
+    </section>
+
+    <section>
+      <h2>Changes</h2>
+      <p>If this policy changes, the new version will be posted here with a new effective date.</p>
+    </section>
+
+    <section>
+      <h2>Contact</h2>
+      <p>Questions about this policy: <a href="mailto:support@hearthbar.app">support@hearthbar.app</a>.</p>
+    </section>
+  </div>
+</main>
+
+<div class="wrap">
+  <footer>
+    <div class="links">
+      <a href="index.html">Hearth</a>
+      <a href="setup.html">Setup</a>
+      <a href="mailto:support@hearthbar.app">Support</a>
+    </div>
+    <p>Hearth is not affiliated with Google or Nest. Nest is a trademark of Google LLC.</p>
+  </footer>
+</div>
+
+</body>
+</html>
