@@ -8,7 +8,7 @@ struct NestConfig: Codable, Equatable {
 
     /// Credentials shipped inside the app bundle as HearthCredentials.plist, if any.
     static let bundled: NestConfig? = {
-        guard let url = Bundle.main.url(forResource: "HearthCredentials", withExtension: "plist"),
+        guard let url = bundledURL,
               let dict = NSDictionary(contentsOf: url) as? [String: Any],
               let projectID = dict["ProjectID"] as? String, !projectID.isEmpty,
               let clientID = dict["ClientID"] as? String, !clientID.isEmpty,
@@ -16,6 +16,22 @@ struct NestConfig: Codable, Equatable {
         else { return nil }
         return NestConfig(projectID: projectID, clientID: clientID, clientSecret: clientSecret)
     }()
+
+    private static var bundledURL: URL? {
+        if let url = Bundle.main.url(forResource: "HearthCredentials", withExtension: "plist") { return url }
+        #if DEBUG
+        // `swift run` builds have no bundle, so read the plist from the source tree.
+        // HEARTH_NO_BUNDLED=1 simulates a build without it.
+        if ProcessInfo.processInfo.environment["HEARTH_NO_BUNDLED"] == "1" { return nil }
+        let mac = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+        let url = mac.appendingPathComponent("Resources/HearthCredentials.plist")
+        return FileManager.default.fileExists(atPath: url.path) ? url : nil
+        #else
+        return nil
+        #endif
+    }
 }
 
 // MARK: - Validation
@@ -83,11 +99,11 @@ enum AuthError: LocalizedError {
         case .invalidClient:
             return "Google didn't accept the Client ID or Secret. Check they match a Desktop app client. A new client can take a few minutes to start working."
         case .accessDenied:
-            return "Google denied access. If you didn't cancel, add your Google account as a test user and try again."
+            return "Google denied access. If you didn't cancel, your Google account may need to be added as a test user."
         case .redirectMismatch:
             return "Google rejected the sign-in redirect. The OAuth client must be the Desktop app type."
         case .sessionExpired:
-            return "Your Google session expired. Apps in Testing status sign out after 7 days. Publish the app to stop this, then sign in again."
+            return "Your Google session ended. Sign in again to reconnect."
         case .noRefreshToken:
             return "Google didn't return a long-lived token. Remove Hearth from your Google account's third-party access and sign in again."
         case .server(let msg):
@@ -95,21 +111,16 @@ enum AuthError: LocalizedError {
         }
     }
 
-    /// A one-click fix the UI can offer next to the message.
-    var recovery: (title: String, url: URL)? {
+    /// A one-click fix the UI can offer next to the message. Console links only help
+    /// people who run their own Google project.
+    func recovery(ownProject: Bool) -> (title: String, url: URL)? {
         switch self {
-        case .invalidClient:
-            return ("Open OAuth Clients", Links.clients)
-        case .accessDenied:
-            return ("Add Test User", Links.audience)
-        case .redirectMismatch:
-            return ("Create Desktop Client", Links.createClient)
-        case .sessionExpired:
-            return ("Publish App", Links.audience)
-        case .noRefreshToken:
-            return ("Third-Party Access", Links.accountConnections)
-        default:
-            return nil
+        case .noRefreshToken: return ("Third-Party Access", Links.accountConnections)
+        case .invalidClient where ownProject: return ("Open OAuth Clients", Links.clients)
+        case .accessDenied where ownProject: return ("Add Test User", Links.audience)
+        case .redirectMismatch where ownProject: return ("Open OAuth Clients", Links.clients)
+        case .sessionExpired where ownProject: return ("Publish App", Links.audience)
+        default: return nil
         }
     }
 
@@ -127,14 +138,8 @@ enum AuthError: LocalizedError {
 }
 
 enum Links {
-    static let createClient = URL(string: "https://console.cloud.google.com/auth/clients/create")!
     static let clients = URL(string: "https://console.cloud.google.com/auth/clients")!
-    static let enableAPI = URL(string: "https://console.cloud.google.com/apis/library/smartdevicemanagement.googleapis.com")!
     static let audience = URL(string: "https://console.cloud.google.com/auth/audience")!
-    static let deviceAccess = URL(string: "https://console.nest.google.com/device-access/project-list")!
     static let accountConnections = URL(string: "https://myaccount.google.com/connections")!
-
-    static func nestPermissions(projectID: String) -> URL {
-        URL(string: "https://nestservices.google.com/partnerconnections/\(projectID)")!
-    }
+    static let setupGuide = URL(string: "https://hearthbar.app/setup.html")!
 }

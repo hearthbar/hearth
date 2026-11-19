@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Setup Guide · Hearth</title>
+<title>Use Your Own Google Project · Hearth</title>
 <meta name="description" content="How to connect Hearth to your Nest thermostat: register for Google Device Access, create an OAuth client, and sign in.">
 <link rel="icon" href="mark.svg">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,8 +17,8 @@
     <img class="mark" src="mark.svg" alt="">
     <div class="word"><a href="index.html">Hearth</a></div>
   </header>
-  <p class="lede">Setup guide</p>
-  <p class="sub">Google requires a one-time registration before any app can reach a Nest thermostat. This takes about 15 minutes and a $5 fee paid to Google. Hearth's setup window follows the same steps and links to each page.</p>
+  <p class="lede">Use your own Google project</p>
+  <p class="sub">Optional. Hearth signs in through its own Google project, so most people never need this page. Run your own project if you want full control of the Google side, or if Hearth's project is full. It takes about 15 minutes and a one-time $5 fee paid to Google.</p>
 </div>
 
 <main style="margin-top:28px;padding-top:40px">
@@ -28,7 +28,7 @@
       <p class="eyebrow">Before you start</p>
       <ul>
         <li>Use the Google account that owns the thermostat. It is the one you use in the Google Home or Nest app.</li>
-        <li>Install Hearth and open it. The setup window opens on first launch. Later, find it in the panel's ... menu under Account and Settings.</li>
+        <li>Install Hearth and open it. In the sign-in window, click <b>Use your own Google project</b>. If you're already signed in, it's under the panel's ... menu, Account and Settings.</li>
         <li>You will end up with three values: a <b>Project ID</b>, a <b>Client ID</b> and a <b>Client Secret</b>.</li>
       </ul>
     </section>
@@ -87,7 +87,7 @@
       <ol class="guide" start="7" style="counter-reset:step 6">
         <li>
           <h3>Enter your credentials</h3>
-          <p>In the setup window, go to <b>Credentials</b>. Copy each value and click <b>Paste</b>. Hearth works out which field it belongs in. You can also drop the client JSON file on the window. Each field shows a check when the value looks right.</p>
+          <p>In Hearth's sign-in window, click <b>Use your own Google project</b>. Copy each value and click <b>Paste</b>. Hearth works out which field it belongs in. You can also drop the client JSON file on the window. Each field shows a check when the value looks right.</p>
         </li>
         <li>
           <h3>Sign in with Google</h3>
@@ -108,7 +108,7 @@
       <p class="eyebrow">Troubleshooting</p>
       <h2>If something goes wrong</h2>
       <h3>No thermostats show up</h3>
-      <p>The thermostat was not turned on in the Nest permissions screen. Use <b>Fix Permissions</b> in the setup window, or <b>Change Thermostat Access</b> in Account and Settings, and turn it on.</p>
+      <p>The thermostat was not turned on in the Nest permissions screen. Use <b>Choose Thermostats</b> after sign-in, or <b>Change Thermostat Access</b> in Account and Settings, and turn it on.</p>
       <h3>"Access blocked"</h3>
       <p>Your account is not a test user, or the app is not published. Add yourself on the Audience page and sign in again.</p>
       <h3>"Invalid client"</h3>

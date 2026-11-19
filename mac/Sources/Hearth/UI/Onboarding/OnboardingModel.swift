@@ -4,125 +4,79 @@ import SwiftUI
 
 @MainActor @Observable
 final class OnboardingModel {
-    enum Mode { case onboarding, account }
-
-    enum Step: Int, CaseIterable, Identifiable {
-        case welcome, cloud, deviceAccess, credentials, signIn, done
-
-        var id: Int { rawValue }
-
-        var title: String {
-            switch self {
-            case .welcome: return "Welcome"
-            case .cloud: return "Google Cloud"
-            case .deviceAccess: return "Device Access"
-            case .credentials: return "Credentials"
-            case .signIn: return "Sign In"
-            case .done: return "Done"
-            }
-        }
-
-        var symbol: String {
-            switch self {
-            case .welcome: return "hand.wave.fill"
-            case .cloud: return "cloud.fill"
-            case .deviceAccess: return "house.fill"
-            case .credentials: return "key.fill"
-            case .signIn: return "person.crop.circle.badge.checkmark"
-            case .done: return "checkmark.seal.fill"
-            }
-        }
-    }
+    enum Mode { case signIn, done, account }
 
     var mode: Mode
-    var step: Step
-    /// Skips the Google setup steps when the app ships with credentials.
-    var useBundled: Bool
+    /// Shows the form for the user's own Google project instead of the built-in one.
+    var showAdvanced: Bool
 
     var projectID = ""
     var clientID = ""
     var clientSecret = ""
 
-    var error: AuthError?
     var notice: String?
     /// The clipboard changed since the user last looked, so offer to paste.
     var clipboardHasNew = false
-    var checkedTasks: Set<String> = []
 
     private let auth = AuthService.shared
     private var lastChangeCount = NSPasteboard.general.changeCount
 
     init() {
         let auth = AuthService.shared
-        mode = auth.isSignedIn ? .account : .onboarding
-        useBundled = auth.usesBundledConfig
+        mode = auth.isSignedIn ? .account : .signIn
+        showAdvanced = !auth.usesBundledConfig
         if let c = auth.config, !auth.usesBundledConfig {
             projectID = c.projectID
             clientID = c.clientID
             clientSecret = c.clientSecret
         }
-        // Returning users with saved credentials go straight to sign in.
-        step = (auth.config != nil) ? .signIn : .welcome
-        error = auth.lastError
 
-        // Screenshot hook: HEARTH_ONBOARDING_STEP=<step index> opens a given step.
-        let env = ProcessInfo.processInfo.environment
-        if env["HEARTH_ONBOARDING_STEP"] == "account" { mode = .account }
-        if let raw = env["HEARTH_ONBOARDING_STEP"].flatMap(Int.init), let forced = Step(rawValue: raw) {
-            step = forced
-            if forced == .credentials {
-                projectID = "3f2a9c1e-7b4d-4e8a-9c21-5d6e8f0a1b2c"
-                clientID = "123456789012-example.apps.google"
-            }
+        // Screenshot hook: HEARTH_ONBOARDING_STEP=advanced|done|account.
+        switch ProcessInfo.processInfo.environment["HEARTH_ONBOARDING_STEP"] {
+        case "advanced":
+            showAdvanced = true
+            projectID = "3f2a9c1e-7b4d-4e8a-9c21-5d6e8f0a1b2c"
+            clientID = "123456789012-example.apps.google"
+        case "done": mode = .done
+        case "account": mode = .account
+        default: break
         }
     }
-
-    var steps: [Step] { useBundled ? [.signIn, .done] : Step.allCases }
 
     var isSigningIn: Bool { auth.isSigningIn }
 
-    // MARK: Navigation
+    /// The last failure worth showing. A cancelled sign-in isn't one.
+    var error: AuthError? { auth.lastError }
 
-    var canGoBack: Bool {
-        guard let i = steps.firstIndex(of: step) else { return false }
-        return i > 0 && step != .done && !isSigningIn
-    }
+    var canSignIn: Bool { showAdvanced ? credentialsValid : auth.hasBundledConfig }
 
-    var canContinue: Bool {
-        switch step {
-        case .credentials: return credentialsValid
-        case .signIn, .done: return false
-        default: return true
+    // MARK: Actions
+
+    func signIn() async {
+        if showAdvanced {
+            auth.saveConfig(NestConfig(projectID: projectID, clientID: clientID, clientSecret: clientSecret))
+        } else if !auth.usesBundledConfig {
+            auth.useBuiltInProject()
         }
+        try? await auth.signIn()
     }
 
-    func next() {
-        guard canContinue, let i = steps.firstIndex(of: step), i + 1 < steps.count else { return }
-        if step == .credentials { saveCredentials() }
-        go(steps[i + 1])
+    func cancelSignIn() { auth.cancelSignIn() }
+
+    func toggleAdvanced() {
+        withAnimation(.snappy) { showAdvanced.toggle() }
     }
 
-    func back() {
-        guard canGoBack, let i = steps.firstIndex(of: step) else { return }
-        go(steps[i - 1])
-    }
-
-    func go(_ target: Step) {
-        error = nil
-        withAnimation(.snappy(duration: 0.28)) { step = target }
-    }
-
-    func useOwnProject() {
-        useBundled = false
-        go(.welcome)
-    }
-
-    /// Starts over from the credentials step, for a different Google project.
-    func changeCredentials() {
-        auth.signOut()
-        useBundled = false
-        mode = .onboarding
-        go(.credentials)
+    /// From the account view: sign out and switch to the user's own project, or back.
+    func switchProject() {
+        if auth.usesBundledConfig {
+            auth.signOut()
+            showAdvanced = true
+        } else {
+            auth.useBuiltInProject()
+            showAdvanced = false
+        }
+        withAnimation(.snappy) { mode = .signIn }
     }
 
     // MARK: Credentials
@@ -214,31 +168,5 @@ final class OnboardingModel {
         case .clientID: return "Client ID"
         case .clientSecret: return "Client Secret"
         }
-    }
-
-    private func saveCredentials() {
-        auth.saveConfig(NestConfig(projectID: projectID, clientID: clientID, clientSecret: clientSecret))
-    }
-
-    // MARK: Sign in
-
-    func signIn() async {
-        error = nil
-        if !useBundled, credentialsValid { saveCredentials() }
-        do {
-            try await auth.signIn()
-            mode = .onboarding
-            go(.done)
-        } catch AuthError.cancelled {
-            error = nil
-        } catch let e as AuthError {
-            error = e
-        } catch {
-            self.error = .server(error.localizedDescription)
-        }
-    }
-
-    func cancelSignIn() {
-        auth.cancelSignIn()
     }
 }

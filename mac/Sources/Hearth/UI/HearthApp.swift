@@ -22,7 +22,7 @@ struct HearthApp: App {
         }
         .menuBarExtraStyle(.window)
 
-        Window("Set Up Hearth", id: SetupWindow.id) {
+        Window("Hearth", id: SetupWindow.id) {
             SetupWindow()
                 .environment(store)
                 .environment(auth)

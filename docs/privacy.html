@@ -27,7 +27,7 @@
 
     <section>
       <h2>What the app stores</h2>
-      <p>Hearth stores three values you enter during setup: your Device Access Project ID, your OAuth Client ID and your OAuth Client Secret. After you sign in, it also stores the refresh token Google issues. All four are kept in the macOS Keychain on your Mac.</p>
+      <p>After you sign in, Hearth stores the refresh token Google issues, in the macOS Keychain on your Mac. If you choose to use your own Google project, it also stores the Project ID, Client ID and Client Secret you enter, in the same Keychain.</p>
       <p>It also remembers which thermostat you selected, in the app's own settings on your Mac. If you turn on Open at login, macOS keeps that setting as a login item.</p>
       <p>Thermostat readings, such as temperature, humidity, mode and setpoints, are held in memory while the app runs. They are not written to disk and not sent anywhere except back to Google when you make a change.</p>
     </section>
@@ -63,7 +63,7 @@
     <section>
       <h2>Removing access and data</h2>
       <ul>
-        <li><b>Inside the app:</b> Account and Settings, Sign Out, removes the refresh token from your Keychain. Your saved IDs stay so you can sign back in. Entering new ones replaces them.</li>
+        <li><b>Inside the app:</b> Account and Settings, Sign Out, removes the refresh token from your Keychain. If you use your own Google project, its IDs stay so you can sign back in.</li>
         <li><b>Your Nest permissions:</b> change or remove device access at <a href="https://nestservices.google.com/partnerconnections">nestservices.google.com/partnerconnections</a>.</li>
         <li><b>Your Google account:</b> remove Hearth's access at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>
         <li><b>Everything:</b> delete the app. Keychain items can be removed in Keychain Access by searching for Hearth.</li>

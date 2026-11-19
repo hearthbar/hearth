@@ -8,7 +8,7 @@ extension OpenWindowAction {
     }
 }
 
-/// Root of the setup window: onboarding steps, or the account pane once signed in.
+/// Root of the setup window: sign in, the result, or the account view once signed in.
 struct SetupWindow: View {
     static let id = "setup"
 
@@ -19,11 +19,14 @@ struct SetupWindow: View {
     var body: some View {
         Group {
             switch model.mode {
+            case .signIn: SignInView(model: model)
+            case .done: DoneView(model: model, close: close)
             case .account: AccountView(model: model, close: close)
-            case .onboarding: OnboardingView(model: model, close: close)
             }
         }
-        .frame(width: 600, height: 500)
+        // One fixed size for every state. The window doesn't track content height changes.
+        .frame(width: 460, height: 500)
+        .animation(.snappy, value: model.mode)
         .containerBackground(.thinMaterial, for: .window)
         .onExitCommand(perform: close)
         // Show a Dock icon while this window is open so Cmd-Tab gets back here from the browser.
@@ -33,7 +36,10 @@ struct SetupWindow: View {
         }
         .onDisappear { NSApp.setActivationPolicy(.accessory) }
         .onChange(of: auth.isSignedIn) { _, signedIn in
-            if !signedIn, model.mode == .account { model.mode = .onboarding; model.go(.signIn) }
+            withAnimation(.snappy) {
+                if signedIn, model.mode == .signIn { model.mode = .done }
+                if !signedIn, model.mode != .signIn { model.mode = .signIn }
+            }
         }
     }
 
@@ -43,149 +49,183 @@ struct SetupWindow: View {
     }
 }
 
-// MARK: - Onboarding
+// MARK: - Sign in
 
-struct OnboardingView: View {
+private struct SignInView: View {
+    @Bindable var model: OnboardingModel
+    @Environment(AuthService.self) private var auth
+
+    var body: some View {
+        VStack(spacing: 18) {
+            AppMark(size: 64)
+                .padding(.top, 12)
+
+            VStack(spacing: 6) {
+                Text("Control your Nest from the menu bar")
+                    .font(.title2.weight(.semibold))
+                    .multilineTextAlignment(.center)
+                Text(subtitle)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if model.showAdvanced {
+                CredentialsForm(model: model)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+
+            if let error = model.error {
+                ErrorCard(error: error, ownProject: !auth.usesBundledConfig)
+                    .transition(.opacity)
+            }
+
+            if model.isSigningIn {
+                VStack(spacing: 10) {
+                    HStack(spacing: 8) {
+                        ProgressView().controlSize(.small)
+                        Text("Finish in your browser").font(.headline)
+                    }
+                    Button("Cancel", action: model.cancelSignIn)
+                        .controlSize(.large)
+                        .keyboardShortcut(.cancelAction)
+                }
+                .frame(minHeight: 52)
+            } else {
+                Button {
+                    Task { await model.signIn() }
+                } label: {
+                    Text(model.error == nil ? "Sign in with Google" : "Try Again")
+                        .frame(minWidth: 220)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.extraLarge)
+                .keyboardShortcut(.defaultAction)
+                .disabled(!model.canSignIn)
+                .frame(minHeight: 52)
+            }
+
+            if auth.hasBundledConfig && !model.isSigningIn {
+                Button(model.showAdvanced ? "Use Hearth's built-in project" : "Use your own Google project",
+                       action: model.toggleAdvanced)
+                    .buttonStyle(.link)
+                    .font(.caption)
+            }
+        }
+        .padding(.horizontal, 32)
+        .padding(.top, 20)
+        .padding(.bottom, 24)
+        .animation(.snappy, value: model.isSigningIn)
+        .animation(.snappy, value: model.error?.localizedDescription)
+    }
+
+    private var subtitle: String {
+        model.showAdvanced
+            ? "Enter your Google project details, then sign in."
+            : "Your browser opens. Pick your home and thermostat on Google's screen."
+    }
+}
+
+// MARK: - Done
+
+private struct DoneView: View {
     @Bindable var model: OnboardingModel
     let close: () -> Void
+    @Environment(ThermostatStore.self) private var store
+    @State private var loaded = false
+
+    private var found: Bool { loaded && !store.thermostats.isEmpty }
 
     var body: some View {
-        HStack(spacing: 0) {
-            sidebar
-            Divider()
-            VStack(spacing: 0) {
-                ZStack {
-                    content
-                        .id(model.step)
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .trailing).combined(with: .opacity),
-                            removal: .move(edge: .leading).combined(with: .opacity)))
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .clipped()
-                footer
-            }
-        }
-        .ignoresSafeArea()
-    }
+        VStack(spacing: 16) {
+            Image(systemName: found || !loaded ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                .font(.system(size: 44))
+                .foregroundStyle(found || !loaded ? Color.green : Color.orange)
+                .padding(.top, 12)
 
-    // MARK: Sidebar
-
-    private var sidebar: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 9) {
-                AppMark(size: 30)
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("Hearth").font(.headline)
-                    Text("Setup").font(.caption).foregroundStyle(.secondary)
-                }
-            }
-            .padding(.top, 44)
-            .padding(.bottom, 22)
-
-            VStack(alignment: .leading, spacing: 4) {
-                ForEach(model.steps) { step in
-                    StepRow(step: step, state: state(of: step))
-                }
-            }
-            Spacer()
-            if !model.useBundled {
-                Label("About 15 minutes", systemImage: "clock")
-                    .font(.caption)
+            VStack(spacing: 6) {
+                Text(found ? "You're connected" : (loaded ? "No thermostats shared" : "Connected to Google"))
+                    .font(.title2.weight(.semibold))
+                Text(subtitle)
                     .foregroundStyle(.secondary)
-                    .padding(.bottom, 18)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-        }
-        .padding(.horizontal, 16)
-        .frame(width: 180)
-        .frame(maxHeight: .infinity, alignment: .top)
-        .background(Color.primary.opacity(0.035))
-    }
 
-    private func state(of step: Step) -> StepRow.State {
-        guard let current = model.steps.firstIndex(of: model.step),
-              let i = model.steps.firstIndex(of: step) else { return .upcoming }
-        if i < current || model.step == .done { return .complete }
-        return i == current ? .current : .upcoming
-    }
-
-    typealias Step = OnboardingModel.Step
-
-    // MARK: Content
-
-    @ViewBuilder
-    private var content: some View {
-        switch model.step {
-        case .welcome: WelcomeStep()
-        case .cloud: CloudStep(model: model)
-        case .deviceAccess: DeviceAccessStep(model: model)
-        case .credentials: CredentialsStep(model: model)
-        case .signIn: SignInStep(model: model)
-        case .done: DoneStep(model: model)
-        }
-    }
-
-    // MARK: Footer
-
-    private var footer: some View {
-        HStack {
-            if model.canGoBack {
-                Button("Back", action: model.back)
-                    .keyboardShortcut(.leftArrow, modifiers: .command)
-            }
-            Spacer()
-            switch model.step {
-            case .done:
-                Button("Finish", action: close)
+            if !loaded {
+                ProgressView().controlSize(.small)
+            } else if found {
+                ScrollView {
+                    VStack(spacing: 8) {
+                        ForEach(store.thermostats) { ThermostatRow(t: $0) }
+                    }
+                }
+                .frame(maxHeight: 200)
+                .fixedSize(horizontal: false, vertical: true)
+                Button(action: close) { Text("Done").frame(minWidth: 220) }
                     .buttonStyle(.borderedProminent)
+                    .controlSize(.extraLarge)
                     .keyboardShortcut(.defaultAction)
-            case .signIn:
-                EmptyView()
-            default:
-                Button("Continue", action: model.next)
-                    .buttonStyle(.borderedProminent)
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(!model.canContinue)
+            } else {
+                Button {
+                    loaded = false
+                    Task {
+                        await model.signIn()
+                        await load()
+                    }
+                } label: {
+                    Text("Choose Thermostats").frame(minWidth: 220)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.extraLarge)
+                .keyboardShortcut(.defaultAction)
             }
         }
-        .controlSize(.large)
-        .padding(.horizontal, 24)
-        .padding(.vertical, 14)
-        .frame(minHeight: 64)
-        .background(alignment: .top) { Divider() }
+        .padding(.horizontal, 32)
+        .padding(.top, 20)
+        .padding(.bottom, 24)
+        .task { await load() }
+    }
+
+    private var subtitle: String {
+        if !loaded { return "Looking for your thermostats." }
+        if found { return "Click the thermometer in your menu bar to control it." }
+        return "On Google's screen, turn on each thermostat you want Hearth to control."
+    }
+
+    private func load() async {
+        await store.refresh()
+        // Another refresh may already be in flight from the menu bar; wait for it.
+        while store.isLoading { try? await Task.sleep(for: .milliseconds(200)) }
+        withAnimation(.snappy) { loaded = true }
     }
 }
 
-private struct StepRow: View {
-    enum State { case complete, current, upcoming }
-    let step: OnboardingModel.Step
-    let state: State
+struct ThermostatRow: View {
+    let t: Thermostat
 
     var body: some View {
-        HStack(spacing: 9) {
-            ZStack {
-                Circle()
-                    .fill(state == .upcoming ? Color.primary.opacity(0.08) : Color.accentColor)
-                    .frame(width: 22, height: 22)
-                Image(systemName: state == .complete ? "checkmark" : step.symbol)
-                    .font(.system(size: state == .complete ? 10 : 10, weight: .bold))
-                    .foregroundStyle(state == .upcoming ? Color.secondary : Color.white)
+        HStack(spacing: 12) {
+            Image(systemName: "thermometer.medium")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 32, height: 32)
+                .background((t.glow ?? Theme.faceEdge).gradient, in: Circle())
+            VStack(alignment: .leading, spacing: 1) {
+                Text(t.name).font(.callout.weight(.medium))
+                Text(t.isOnline ? t.statusText : "Offline").font(.caption).foregroundStyle(.secondary)
             }
-            Text(step.title)
-                .font(.callout.weight(state == .current ? .semibold : .regular))
-                .foregroundStyle(state == .upcoming ? .secondary : .primary)
-            Spacer(minLength: 0)
+            Spacer()
+            Text(t.scale.format(t.ambientC))
+                .font(.system(.title3, design: .rounded).weight(.medium))
+                .monospacedDigit()
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
-        .background {
-            if state == .current {
-                RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.primary.opacity(0.07))
-            }
-        }
-        .animation(.snappy, value: state)
+        .padding(10)
+        .background(Card())
     }
 }
+
+// MARK: - Shared pieces
 
 /// The app's mark: a cool to warm gradient tile with a thermometer.
 struct AppMark: View {
@@ -200,5 +240,40 @@ struct AppMark: View {
                 LinearGradient(colors: [Theme.cool, Theme.heat], startPoint: .bottomLeading, endPoint: .topTrailing),
                 in: RoundedRectangle(cornerRadius: size * 0.26, style: .continuous))
             .shadow(color: .black.opacity(0.15), radius: 2, y: 1)
+    }
+}
+
+struct ErrorCard: View {
+    let error: AuthError
+    var ownProject = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label {
+                Text(error.localizedDescription).fixedSize(horizontal: false, vertical: true)
+            } icon: {
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+            }
+            .font(.callout)
+            if let recovery = error.recovery(ownProject: ownProject) {
+                Link(destination: recovery.url) {
+                    Label(recovery.title, systemImage: "arrow.up.right.square")
+                }
+                .font(.callout.weight(.medium))
+                .padding(.leading, 26)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Color.orange.opacity(0.25)))
+    }
+}
+
+struct Card: View {
+    var body: some View {
+        RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .fill(Color.primary.opacity(0.045))
+            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Color.primary.opacity(0.06)))
     }
 }

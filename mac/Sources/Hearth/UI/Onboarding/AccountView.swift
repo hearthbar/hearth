@@ -19,109 +19,76 @@ struct AccountView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    HStack(spacing: 12) {
-                        AppMark(size: 44)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Hearth").font(.title2.weight(.semibold))
-                            Text("Version \(version)").font(.caption).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                    }
-
-                    section("Google") {
-                        row("Status") {
-                            Label("Connected", systemImage: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                        }
-                        Divider()
-                        row("Project") {
-                            Text(auth.config?.projectID ?? "--")
-                                .font(.system(.callout, design: .monospaced))
-                                .textSelection(.enabled)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                        }
-                        Divider()
-                        row("Credentials") {
-                            Text(auth.usesBundledConfig ? "Built in" : "Your Google project")
-                                .foregroundStyle(.secondary)
-                        }
-                        Divider()
-                        row("Thermostats") {
-                            Text(store.thermostats.isEmpty ? "None shared" : store.thermostats.map(\.name).joined(separator: ", "))
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                        }
-                    }
-
-                    if let error = model.error {
-                        ErrorCard(error: error)
-                    }
-
-                    HStack(spacing: 8) {
-                        Button {
-                            Task { await model.signIn() }
-                        } label: {
-                            Label(model.isSigningIn ? "Waiting for browser" : "Change Thermostat Access",
-                                  systemImage: "slider.horizontal.3")
-                        }
-                        .disabled(model.isSigningIn)
-                        Link(destination: Links.accountConnections) {
-                            Label("Google Account Access", systemImage: "arrow.up.right.square")
-                        }
-                        Spacer()
-                    }
-
-                    section("General") {
-                        row("Open at login") {
-                            Toggle("", isOn: $launchAtLogin)
-                                .toggleStyle(.switch)
-                                .controlSize(.small)
-                                .labelsHidden()
-                                .onChange(of: launchAtLogin) { _, on in setLaunchAtLogin(on) }
-                        }
-                    }
-                    if let loginError {
-                        Text(loginError).font(.caption).foregroundStyle(.orange)
-                    }
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(spacing: 12) {
+                AppMark(size: 44)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Hearth").font(.title2.weight(.semibold))
+                    Text("Version \(version)").font(.caption).foregroundStyle(.secondary)
                 }
-                .padding(.horizontal, 32)
-                .padding(.top, 40)
-                .padding(.bottom, 20)
             }
+
+            VStack(spacing: 0) {
+                row("Google") {
+                    Label(auth.usesBundledConfig ? "Connected" : "Connected, your project",
+                          systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                }
+                Divider()
+                row("Thermostats") {
+                    Text(store.thermostats.isEmpty ? "None shared" : store.thermostats.map(\.name).joined(separator: ", "))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                Divider()
+                row("Open at login") {
+                    Toggle("", isOn: $launchAtLogin)
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
+                        .labelsHidden()
+                        .onChange(of: launchAtLogin) { _, on in setLaunchAtLogin(on) }
+                }
+            }
+            .padding(.horizontal, 12)
+            .background(Card())
+
+            if let error = model.error {
+                ErrorCard(error: error, ownProject: !auth.usesBundledConfig)
+            }
+            if let loginError {
+                Text(loginError).font(.caption).foregroundStyle(.orange)
+            }
+
+            HStack {
+                Button(model.isSigningIn ? "Finish in your browser" : "Change Thermostat Access") {
+                    Task { await model.signIn() }
+                }
+                .disabled(model.isSigningIn)
+                if auth.hasBundledConfig {
+                    Button(auth.usesBundledConfig ? "Use your own Google project" : "Use Hearth's built-in project",
+                           action: model.switchProject)
+                        .buttonStyle(.link)
+                        .font(.caption)
+                }
+            }
+
+            Divider()
 
             HStack {
                 Button("Sign Out", role: .destructive) {
                     auth.signOut()
                     store.reset()
                 }
-                Button("Use Different Credentials", action: model.changeCredentials)
                 Spacer()
                 Button("Done", action: close)
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.defaultAction)
             }
             .controlSize(.large)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 14)
-            .background(alignment: .top) { Divider() }
         }
-        .ignoresSafeArea(edges: .top)
-    }
-
-    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title.uppercased())
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .padding(.leading, 4)
-            VStack(spacing: 0) { content() }
-                .padding(.horizontal, 12)
-                .background(Card())
-        }
+        .padding(.horizontal, 28)
+        .padding(.top, 36)
+        .padding(.bottom, 20)
     }
 
     private func row<Trailing: View>(_ title: String, @ViewBuilder trailing: () -> Trailing) -> some View {

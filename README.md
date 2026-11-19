@@ -28,9 +28,15 @@ Support and bug reports: [support@hearthbar.app](mailto:support@hearthbar.app).
 
 Requires macOS 15 or later.
 
-## One-time Google setup
+## Sign in
 
-Google makes you register as a developer to use the API. It takes about 15 minutes and costs a one-time $5.
+Open Hearth and click **Sign in with Google**. The browser opens. Pick your account, then your home and thermostat on Google's screen. Hearth lists what it found and you're done.
+
+Hearth signs in through a Google project that ships inside the app. See [Built-in credentials](#built-in-credentials).
+
+## Your own Google project (optional)
+
+Only needed if you build without the built-in credentials, or want your own. Google makes you register as a developer for this. It takes about 15 minutes and costs a one-time $5. The same steps are at https://hearthbar.app/setup.html.
 
 1. **Register for Device Access.** Go to https://console.nest.google.com/device-access, sign in with the Google account that owns the thermostat, accept the terms, and pay the $5 fee.
 2. **Create a Google Cloud project.** Go to https://console.cloud.google.com and create a new project.
@@ -38,6 +44,7 @@ Google makes you register as a developer to use the API. It takes about 15 minut
 4. **Set up the OAuth consent screen.** APIs & Services > OAuth consent screen. Pick **External**. Fill in the app name and your email. Under Test users, add your own Google account.
 5. **Create an OAuth client.** APIs & Services > Credentials > Create credentials > OAuth client ID. Application type: **Desktop app**. Save the **Client ID** and **Client Secret**.
 6. **Create a Device Access project.** Back in https://console.nest.google.com/device-access, create a project. Paste the OAuth Client ID from step 5 when asked. Skip Pub/Sub events. Copy the **Project ID** it shows you.
+7. **Enter them in Hearth.** In the sign-in window, click **Use your own Google project**. Paste each value, or drop the client JSON file from Google Cloud on the window. Then sign in.
 
 ### Avoid signing in every week
 
@@ -85,29 +92,20 @@ A DMG signed with Apple Development works on this Mac only. Other Macs block it 
 
 After that, `release.sh` signs with Developer ID, notarizes, and staples the DMG on its own. Set `NOTARY_PROFILE` to use a different profile name.
 
-### Sharing with a few friends
+### Built-in credentials
 
-To skip the paste step for them, put your credentials in `mac/Resources/HearthCredentials.plist` before building. It is gitignored and gets copied into the app bundle.
+`mac/Resources/HearthCredentials.plist` holds the Project ID, Client ID and Client Secret of the Google project Hearth signs in through. Keys: `ProjectID`, `ClientID`, `ClientSecret`. It is gitignored. `build-app.sh` copies it into the app bundle, and debug builds read it from the source tree. Without it, Hearth opens straight to the own-project form.
 
 Limits to know about:
 
-- Each person must be a test user on your OAuth consent screen, unless you publish it.
-- Device Access projects in sandbox mode allow a small number of users and structures. This is meant for you and a few people, not public distribution.
-- Each person picks their own home and thermostat on the Nest permissions screen.
-
-## Connect your thermostat
-
-1. Click the Hearth icon in the menu bar. The setup panel opens on first run. Later, it's under the ... menu > Account and Settings.
-2. Paste the **Project ID**, **Client ID**, and **Client Secret**.
-3. Click **Sign in with Google**. Your browser opens.
-4. Pick your account. On the Nest permissions screen, select your home and turn on the thermostat(s) you want to control.
-5. Approve. The browser shows a success page and the app loads your thermostat.
-
-Credentials and tokens are stored in the macOS Keychain.
+- A Device Access sandbox account allows 25 users across 5 homes, shared by all its projects. See https://developers.google.com/nest/device-access/project/limits.
+- Other Google accounts must be test users on the OAuth consent screen, or the app must be published.
+- A published app that Google hasn't verified shows an "unverified app" warning at sign-in. Verification needs the homepage and privacy policy at https://hearthbar.app.
+- Each person picks their own home and thermostat on Google's screen.
 
 ## Troubleshooting
 
-- **No thermostats show up.** You probably skipped selecting the thermostat on the Nest permissions screen. Sign out in Settings and sign in again, and turn on each device.
+- **No thermostats show up.** The thermostat wasn't turned on in Google's permissions screen. Click **Choose Thermostats**, or **Change Thermostat Access** in Account and Settings, and turn it on.
 - **"Access blocked" or "app not verified".** Make sure your account is listed as a test user, or that the app is published. Click Advanced > Go to app to continue past the unverified warning.
 - **Sign-in worked a week ago and now fails.** The consent screen is still in Testing. Publish it (see above) and sign in again.
 - **"Invalid client" or redirect errors.** The OAuth client must be type Desktop app. Web clients will not work with the local sign-in redirect.

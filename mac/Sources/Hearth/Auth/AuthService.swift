@@ -15,6 +15,7 @@ final class AuthService {
 
     /// True when running on credentials shipped in the app bundle.
     var usesBundledConfig: Bool { Keychain.config == nil && NestConfig.bundled != nil }
+    var hasBundledConfig: Bool { NestConfig.bundled != nil }
 
     private static let scope = "https://www.googleapis.com/auth/sdm.service"
     private static let tokenURL = URL(string: "https://oauth2.googleapis.com/token")!
@@ -41,6 +42,14 @@ final class AuthService {
         Keychain.config = trimmed
     }
 
+    /// Forgets the user's own project and goes back to the built-in one.
+    func useBuiltInProject() {
+        guard let bundled = NestConfig.bundled else { return }
+        signOut()
+        Keychain.config = nil
+        config = bundled
+    }
+
     func signOut() {
         activeServer?.stop()
         activeServer = nil
@@ -61,11 +70,16 @@ final class AuthService {
     // MARK: Sign in
 
     func signIn() async throws {
+        lastError = nil
         do {
             try await performSignIn()
-            lastError = nil
+        } catch AuthError.cancelled {
+            throw AuthError.cancelled
         } catch let error as AuthError {
             lastError = error
+            throw error
+        } catch {
+            lastError = .server(error.localizedDescription)
             throw error
         }
     }
