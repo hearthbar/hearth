@@ -51,4 +51,29 @@ enum SetpointRules {
         guard let heatC else { return proposedC }
         return max(proposedC, heatC + TemperatureScale.rangeGapC)
     }
+
+    /// Moves the heat point to `proposedC`, pushing the cool point up when they get closer than
+    /// the minimum gap. Stays inside `limitsC`, so near the top the heat point stops instead.
+    static func pushHeat(_ proposedC: Double, cool coolC: Double?, limitsC: ClosedRange<Double>) -> (heat: Double, cool: Double?) {
+        let gap = TemperatureScale.rangeGapC
+        let heat = min(max(proposedC, limitsC.lowerBound), limitsC.upperBound - gap)
+        guard let coolC else { return (heat, nil) }
+        return (heat, max(coolC, heat + gap))
+    }
+
+    /// Moves both points by `deltaC`, keeping their distance, as far as `limitsC` allows.
+    static func shift(heat heatC: Double, cool coolC: Double, by deltaC: Double,
+                      limitsC: ClosedRange<Double>) -> (heat: Double, cool: Double) {
+        let d = max(min(deltaC, limitsC.upperBound - coolC), limitsC.lowerBound - heatC)
+        return (heatC + d, coolC + d)
+    }
+
+    /// Moves the cool point to `proposedC`, pushing the heat point down when they get closer than
+    /// the minimum gap. Stays inside `limitsC`, so near the bottom the cool point stops instead.
+    static func pushCool(_ proposedC: Double, heat heatC: Double?, limitsC: ClosedRange<Double>) -> (heat: Double?, cool: Double) {
+        let gap = TemperatureScale.rangeGapC
+        let cool = max(min(proposedC, limitsC.upperBound), limitsC.lowerBound + gap)
+        guard let heatC else { return (nil, cool) }
+        return (min(heatC, cool - gap), cool)
+    }
 }

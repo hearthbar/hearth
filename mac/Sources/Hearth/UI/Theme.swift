@@ -10,6 +10,7 @@ enum Theme {
     static let eco = Color(red: 0.30, green: 0.80, blue: 0.45)
     static let face = Color(red: 0.11, green: 0.12, blue: 0.14)
     static let faceEdge = Color(red: 0.20, green: 0.21, blue: 0.24)
+    static let faceInk = Color(red: 0.96, green: 0.95, blue: 0.93)
 
     static func accent(for mode: ThermostatMode) -> Color {
         switch mode {
@@ -32,6 +33,13 @@ extension Thermostat {
         }
     }
 
+    /// " 68°" for a setpoint in Celsius, in this thermostat's scale, or "" when unknown.
+    private func degrees(_ celsius: Double?) -> String {
+        guard let celsius else { return "" }
+        let v = scale.snap(scale.display(celsius))
+        return " " + (v == v.rounded() ? "\(Int(v))" : String(format: "%.1f", v)) + "°"
+    }
+
     var statusText: String {
         if !isOnline { return "Offline" }
         if ecoOn { return "Eco" }
@@ -39,8 +47,8 @@ extension Thermostat {
         case (.heating, _): return "Heating"
         case (.cooling, _): return "Cooling"
         case (_, .off): return "Off"
-        case (_, .heat): return "Heat set to"
-        case (_, .cool): return "Cool set to"
+        case (_, .heat): return "Heat set to" + degrees(heatC)
+        case (_, .cool): return "Cool set to" + degrees(coolC)
         case (_, .heatCool): return "Heat · Cool"
         }
     }

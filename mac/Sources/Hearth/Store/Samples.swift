@@ -35,6 +35,20 @@ extension Thermostat {
               "sdm.devices.traits.ThermostatTemperatureSetpoint":{"heatCelsius":20.0,"coolCelsius":24.4},
               "sdm.devices.traits.Temperature":{"ambientTemperatureCelsius":22.0}}}
             """),
+            make("""
+            {"name":"enterprises/demo/devices/bedroom","type":"sdm.devices.types.THERMOSTAT",
+             "parentRelations":[{"parent":"x","displayName":"Bedroom"}],
+             "traits":{
+              "sdm.devices.traits.Humidity":{"ambientHumidityPercent":52},
+              "sdm.devices.traits.Connectivity":{"status":"ONLINE"},
+              "sdm.devices.traits.Fan":{"timerMode":"OFF"},
+              "sdm.devices.traits.ThermostatMode":{"availableModes":["HEAT","COOL","HEATCOOL","OFF"],"mode":"COOL"},
+              "sdm.devices.traits.ThermostatEco":{"availableModes":["OFF","MANUAL_ECO"],"mode":"OFF","heatCelsius":15.5,"coolCelsius":26.6},
+              "sdm.devices.traits.ThermostatHvac":{"status":"COOLING"},
+              "sdm.devices.traits.Settings":{"temperatureScale":"FAHRENHEIT"},
+              "sdm.devices.traits.ThermostatTemperatureSetpoint":{"coolCelsius":23.3},
+              "sdm.devices.traits.Temperature":{"ambientTemperatureCelsius":25.0}}}
+            """),
         ]
     }()
 }

@@ -62,4 +62,29 @@ struct TemperatureTests {
         #expect(SetpointRules.heat(30, cool: nil) == 30)
         #expect(SetpointRules.cool(10, heat: nil) == 10)
     }
+
+    @Test func heatPushesCool() {
+        let limits = 9.0...32.0
+        // Far apart: cool stays put.
+        #expect(SetpointRules.pushHeat(20, cool: 24, limitsC: limits) == (20, 24))
+        // Too close: cool moves up to keep the gap.
+        #expect(SetpointRules.pushHeat(23.5, cool: 24, limitsC: limits) == (23.5, 25))
+        // At the top: heat stops a gap below the limit, cool sits on it.
+        #expect(SetpointRules.pushHeat(32, cool: 24, limitsC: limits) == (30.5, 32))
+    }
+
+    @Test func lockedShiftKeepsDistance() {
+        let limits = 9.0...32.0
+        #expect(SetpointRules.shift(heat: 20, cool: 24, by: 2, limitsC: limits) == (22, 26))
+        // Stops when cool reaches the top or heat reaches the bottom.
+        #expect(SetpointRules.shift(heat: 20, cool: 24, by: 10, limitsC: limits) == (28, 32))
+        #expect(SetpointRules.shift(heat: 12, cool: 16, by: -10, limitsC: limits) == (9, 13))
+    }
+
+    @Test func coolPushesHeat() {
+        let limits = 9.0...32.0
+        #expect(SetpointRules.pushCool(25, heat: 20, limitsC: limits) == (20, 25))
+        #expect(SetpointRules.pushCool(20.5, heat: 20, limitsC: limits) == (19, 20.5))
+        #expect(SetpointRules.pushCool(9, heat: 20, limitsC: limits) == (9, 10.5))
+    }
 }

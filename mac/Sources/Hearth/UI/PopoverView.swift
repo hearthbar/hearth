@@ -46,51 +46,48 @@ struct ThermostatView: View {
     @Environment(ThermostatStore.self) private var store
     let t: Thermostat
     @Environment(\.openWindow) private var openWindow
-
-    private var adjustable: Bool { t.isOnline && !t.ecoOn && t.mode != .off }
+    private var theme = ThemeSettings()
+    @State private var askingZip = false
 
     var body: some View {
-        VStack(spacing: 14) {
-            header
-            ZStack {
-                DialView(t: t)
-                    .opacity(store.isStale ? 0.6 : 1)
-                    .saturation(store.isStale ? 0.4 : 1)
-                stepper.offset(y: 98)
+        // Re-checked each minute so Auto flips at sunrise and sunset while the panel is open.
+        TimelineView(.everyMinute) { context in
+            content.preferredColorScheme(theme.scheme(at: context.date))
+        }
+    }
+
+    private var content: some View {
+        VStack(spacing: 12) {
+            ChannelCard(t: t)
+            if theme.mode == .auto && (!theme.hasPlace || askingZip) {
+                ZipPrompt(zip: theme.$zip, latitude: theme.$latitude, longitude: theme.$longitude) { askingZip = false }
+                    .disabled(false)
             }
-            .padding(.top, 2)
-            stats
-            ModeBar(t: t)
-            VStack(spacing: 0) {
-                if t.ecoAvailable { EcoRow(t: t); Divider().padding(.leading, 44) }
-                if t.hasFan { FanRow(t: t) }
+            if t.hasFan {
+                VStack(spacing: 0) {
+                    FanRow(t: t)
+                }
+                .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.primary.opacity(0.1)))
             }
-            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            if let error = store.error {
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
             footer
         }
-        .padding(16)
+        .padding(14)
         .disabled(!t.isOnline)
     }
 
-    private var header: some View {
+    private var footer: some View {
         HStack(spacing: 8) {
-            Circle()
-                .fill(t.isOnline ? Color.green : Color.red)
-                .frame(width: 7, height: 7)
-            if store.thermostats.count > 1 {
-                Menu {
-                    ForEach(store.thermostats) { th in
-                        Button(th.name) { store.selectedID = th.id }
-                    }
-                } label: {
-                    Text(t.name).font(.headline)
-                }
-                .menuStyle(.borderlessButton)
-                .fixedSize()
-            } else {
-                Text(t.name).font(.headline)
-            }
+            status
             Spacer()
+            ThemeSwitch(mode: theme.$modeRaw)
             Button {
                 Task { await store.refresh() }
             } label: {
@@ -103,6 +100,10 @@ struct ThermostatView: View {
             .help("Refresh")
             Menu {
                 Button("Account and Settings") { openWindow.setup() }
+                Button(theme.hasPlace ? "Change ZIP Code (\(theme.zip))…" : "Set ZIP Code for Sunrise and Sunset…") {
+                    theme.modeRaw = ThemeMode.auto.rawValue
+                    askingZip = true
+                }
                 Divider()
                 Button("Quit Hearth") { NSApp.terminate(nil) }.keyboardShortcut("q")
             } label: {
@@ -115,148 +116,29 @@ struct ThermostatView: View {
         .disabled(false)
     }
 
-    private var stepper: some View {
-        HStack(spacing: 46) {
-            Button { store.nudge(-1) } label: { Image(systemName: "minus") }
-                .help("Lower temperature")
-                .keyboardShortcut(.downArrow, modifiers: [])
-            Button { store.nudge(1) } label: { Image(systemName: "plus") }
-                .help("Raise temperature")
-                .keyboardShortcut(.upArrow, modifiers: [])
-        }
-        .buttonStyle(DialButtonStyle())
-        .opacity(adjustable ? 1 : 0)
-        .disabled(!adjustable)
-    }
-
-    private var stats: some View {
-        HStack(spacing: 0) {
-            Stat(symbol: "thermometer.medium", value: t.scale.format(t.ambientC), label: "Inside")
-            Divider().frame(height: 28)
-            Stat(symbol: "humidity.fill", value: t.humidity.map { "\(Int($0))%" } ?? "--", label: "Humidity")
-            Divider().frame(height: 28)
-            Stat(symbol: hvacSymbol, value: hvacText, label: "System", tint: t.glow)
-        }
-    }
-
-    private var hvacSymbol: String {
-        switch t.hvac {
-        case .heating: return "flame.fill"
-        case .cooling: return "snowflake"
-        case .off: return "pause.circle"
-        }
-    }
-
-    private var hvacText: String {
-        switch t.hvac {
-        case .heating: return "Heating"
-        case .cooling: return "Cooling"
-        case .off: return "Idle"
-        }
-    }
-
-    private var footer: some View {
-        HStack {
-            if let error = store.error {
-                Label(error, systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
-                    .lineLimit(2)
-            } else if let updated = store.lastUpdated {
-                TimelineView(.periodic(from: .now, by: 15)) { _ in
-                    Text("\(store.isStale ? "Stale, last updated" : "Updated") \(updated, format: .relative(presentation: .named))")
-                }
-                .foregroundStyle(.secondary)
+    /// Online dot plus when the data was last fetched.
+    private var status: some View {
+        HStack(spacing: 5) {
+            Circle()
+                .fill(t.isOnline ? (store.isStale ? Color.orange : Color.green) : Color.red)
+                .frame(width: 6, height: 6)
+            TimelineView(.periodic(from: .now, by: 15)) { _ in
+                Text(statusLine)
             }
-            Spacer()
         }
         .font(.caption)
+        .foregroundStyle(.secondary)
     }
-}
 
-private struct Stat: View {
-    let symbol: String
-    let value: String
-    let label: String
-    var tint: Color? = nil
-
-    var body: some View {
-        VStack(spacing: 3) {
-            HStack(spacing: 4) {
-                Image(systemName: symbol).font(.caption).foregroundStyle(tint ?? .secondary)
-                Text(value).font(.system(.callout, design: .rounded).weight(.semibold)).monospacedDigit()
-            }
-            Text(label).font(.caption2).foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
-// MARK: - Mode bar
-
-private struct ModeBar: View {
-    @Environment(ThermostatStore.self) private var store
-    let t: Thermostat
-    @Namespace private var ns
-
-    var body: some View {
-        HStack(spacing: 4) {
-            ForEach(t.availableModes) { mode in
-                let selected = t.mode == mode && !t.ecoOn
-                Button {
-                    store.setMode(mode)
-                } label: {
-                    VStack(spacing: 3) {
-                        Image(systemName: mode.symbol).font(.system(size: 14, weight: .semibold))
-                        Text(mode.title).font(.caption2.weight(.medium))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 7)
-                    .foregroundStyle(selected ? Color.white : Color.primary.opacity(0.75))
-                    .background {
-                        if selected {
-                            RoundedRectangle(cornerRadius: 9, style: .continuous)
-                                .fill(Theme.accent(for: mode).gradient)
-                                .matchedGeometryEffect(id: "mode", in: ns)
-                                .shadow(color: Theme.accent(for: mode).opacity(0.4), radius: 4, y: 2)
-                        }
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(3)
-        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: t.mode)
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: t.ecoOn)
+    private var statusLine: String {
+        guard t.isOnline else { return "Offline" }
+        guard let updated = store.lastUpdated else { return "Connecting" }
+        let when = updated.formatted(.relative(presentation: .named))
+        return store.isStale ? "Last updated \(when)" : "Updated \(when)"
     }
 }
 
 // MARK: - Rows
-
-private struct EcoRow: View {
-    @Environment(ThermostatStore.self) private var store
-    let t: Thermostat
-
-    var body: some View {
-        RowShell(symbol: "leaf.fill", tint: Theme.eco, title: "Eco", subtitle: subtitle) {
-            Toggle("", isOn: Binding(get: { t.ecoOn }, set: { store.setEco($0) }))
-                .toggleStyle(.switch)
-                .controlSize(.small)
-                .tint(Theme.eco)
-                .labelsHidden()
-        }
-    }
-
-    private var subtitle: String {
-        let lo = t.ecoHeatC.map { t.scale.format($0) }
-        let hi = t.ecoCoolC.map { t.scale.format($0) }
-        switch (lo, hi) {
-        case let (l?, h?): return "Holds \(l) to \(h)"
-        default: return "Saves energy while you're away"
-        }
-    }
-}
 
 private struct FanRow: View {
     @Environment(ThermostatStore.self) private var store
@@ -322,17 +204,6 @@ private struct RowShell<Trailing: View>: View {
 
 // MARK: - Button styles
 
-struct DialButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 13, weight: .bold))
-            .foregroundStyle(.white)
-            .frame(width: 30, height: 30)
-            .background(.white.opacity(configuration.isPressed ? 0.3 : 0.14), in: Circle())
-            .scaleEffect(configuration.isPressed ? 0.92 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
-    }
-}
 
 struct IconButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {

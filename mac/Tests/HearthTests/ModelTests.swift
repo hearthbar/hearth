@@ -134,9 +134,10 @@ struct ParsingTests {
     }
 
     @Test func samplesParse() {
-        #expect(Thermostat.samples.count == 2)
+        #expect(Thermostat.samples.count == 3)
         #expect(Thermostat.samples[0].mode == .heat)
         #expect(Thermostat.samples[1].mode == .heatCool)
+        #expect(Thermostat.samples[2].mode == .cool)
     }
 }
 
