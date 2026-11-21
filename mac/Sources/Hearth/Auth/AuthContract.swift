@@ -20,14 +20,18 @@ struct NestConfig: Codable, Equatable {
     private static var bundledURL: URL? {
         if let url = Bundle.main.url(forResource: "HearthCredentials", withExtension: "plist") { return url }
         #if DEBUG
-        // `swift run` builds have no bundle, so read the plist from the source tree.
-        // HEARTH_NO_BUNDLED=1 simulates a build without it.
+        // `swift run` builds have no bundle, so read the plist from the source tree,
+        // then from ~/.config/hearth. HEARTH_NO_BUNDLED=1 simulates a build without it.
         if ProcessInfo.processInfo.environment["HEARTH_NO_BUNDLED"] == "1" { return nil }
         let mac = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent()
-        let url = mac.appendingPathComponent("Resources/HearthCredentials.plist")
-        return FileManager.default.fileExists(atPath: url.path) ? url : nil
+        let candidates = [
+            mac.appendingPathComponent("Resources/HearthCredentials.plist"),
+            FileManager.default.homeDirectoryForCurrentUser
+                .appendingPathComponent(".config/hearth/HearthCredentials.plist"),
+        ]
+        return candidates.first { FileManager.default.fileExists(atPath: $0.path) }
         #else
         return nil
         #endif

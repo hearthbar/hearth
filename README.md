@@ -94,7 +94,7 @@ After that, `release.sh` signs with Developer ID, notarizes, and staples the DMG
 
 ### Built-in credentials
 
-`mac/Resources/HearthCredentials.plist` holds the Project ID, Client ID and Client Secret of the Google project Hearth signs in through. Keys: `ProjectID`, `ClientID`, `ClientSecret`. It is gitignored. `build-app.sh` copies it into the app bundle, and debug builds read it from the source tree. Without it, Hearth opens straight to the own-project form.
+`HearthCredentials.plist` holds the Project ID, Client ID and Client Secret of the Google project Hearth signs in through. Keys: `ProjectID`, `ClientID`, `ClientSecret`. Keep it at `~/.config/hearth/HearthCredentials.plist` so every worktree finds it. A copy at `mac/Resources/HearthCredentials.plist` takes precedence and is gitignored. `build-app.sh` copies it into the app bundle, and debug builds read it from the same two places. Without it, Hearth opens straight to the own-project form.
 
 Limits to know about:
 

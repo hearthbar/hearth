@@ -45,9 +45,15 @@ cp Resources/Info.plist "$APP/Contents/Info.plist"
 plutil -replace CFBundleShortVersionString -string "$VERSION" "$APP/Contents/Info.plist"
 plutil -replace CFBundleVersion -string "$BUILD_NUMBER" "$APP/Contents/Info.plist"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
-if [[ -f Resources/HearthCredentials.plist ]]; then
-  cp Resources/HearthCredentials.plist "$APP/Contents/Resources/"
-  echo "    bundled HearthCredentials.plist"
+CREDENTIALS=""
+for f in Resources/HearthCredentials.plist "$HOME/.config/hearth/HearthCredentials.plist"; do
+  if [[ -f "$f" ]]; then CREDENTIALS="$f"; break; fi
+done
+if [[ -n "$CREDENTIALS" ]]; then
+  cp "$CREDENTIALS" "$APP/Contents/Resources/HearthCredentials.plist"
+  echo "    bundled HearthCredentials.plist from $CREDENTIALS"
+else
+  echo "    no HearthCredentials.plist, the app will open to the own-project form"
 fi
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
